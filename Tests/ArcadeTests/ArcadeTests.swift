@@ -217,6 +217,38 @@ final class ArcadeTests: XCTestCase {
         XCTAssertGreaterThan(colours.count, 30, "the interface looks blank (\(colours.count) colours)")
     }
 
+    /// Puts the whole interface in a real window (so UIKit-backed sliders, menus and switches draw) and snapshots it.
+    @MainActor
+    func testControlsRenderInARealWindow() throws {
+        let model = ArcadeModel(au: try makeUnit())
+        model.settings.prog = Music.customIndex            // shows the Custom progression editor too
+        let host = UIHostingController(rootView: ArcadeView(model: model))
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 820, height: 1180))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        host.view.frame = window.bounds
+        host.view.setNeedsLayout()
+        host.view.layoutIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+        let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        logPicture(image, name: "window")
+        let attachment = XCTAttachment(image: image)
+        attachment.name = "window"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        let px = try pixels(image)
+        var colours = Set<UInt32>()
+        var i = 0
+        while i < px.data.count {
+            colours.insert(UInt32(px.data[i]) << 16 | UInt32(px.data[i + 1]) << 8 | UInt32(px.data[i + 2]))
+            i += 4 * 5
+        }
+        XCTAssertGreaterThan(colours.count, 60, "the window snapshot looks blank (\(colours.count) colours)")
+        window.isHidden = true
+    }
+
     @MainActor
     func testModelEditingAndScenes() throws {
         let model = ArcadeModel(au: try makeUnit())

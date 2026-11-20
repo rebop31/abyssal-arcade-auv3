@@ -478,7 +478,7 @@ private func drawArena(_ gc: GraphicsContext, size: CGSize, snap: Snapshot, mode
 
     if !snap.running {
         g.draw(Text("stopped — start the host transport (or the internal clock)").font(.system(size: 14, design: .monospaced))
-                .foregroundColor(Palette.bone.opacity(0.4)), at: CGPoint(x: W / 2, y: H - 22), anchor: .center)
+                .foregroundColor(Palette.bone.opacity(0.4)), at: CGPoint(x: W / 2, y: cell * 1.5), anchor: .center)
     }
 }
 
