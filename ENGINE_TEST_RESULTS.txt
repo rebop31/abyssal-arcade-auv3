@@ -1,0 +1,70 @@
+1. starter scene plays, every on has an off, times never go backwards
+     notes on: 436, off: 431
+  PASS   starter scene 1 produces notes (436)
+  PASS   events are in time order across buffers
+  PASS   no stuck notes after the transport stops
+  PASS   all-notes-off sent when the transport stops
+  PASS   no new notes after the transport stops
+2. pitch: in key, and following the progression
+  PASS   Lead peg on row 3 in D Dorian plays G3 (MIDI 55); got 55
+  PASS   progression moves the same peg a scale step down on the second chord ([55, 53])
+     pitch classes used over 40 s: ["C", "D", "E", "F", "G", "A", "B"]
+  PASS   bells and bass stay inside D Dorian while the chords move (516 notes)
+3. quantise grid and swing
+  PASS   straight 1/16 grid: 40 notes, all on the grid
+  PASS   swing 67%: off-beat slots land a third of a tick late (40 notes, 32 off-beat)
+  PASS   humanize moves notes off the grid (39 of 40)
+4. chance, ratchet, humanize, mute
+  PASS   chance 25% plays about a quarter of the time (51 of 200)
+  PASS   ratchet x4 plays four notes per hit (4)
+  PASS   ratchet repeats get quieter ([77, 61, 51, 42])
+  PASS   ratchet notes all have matching offs
+  PASS   a muted voice sends no MIDI
+5. channels and drum routing
+  PASS   Chug sends root, fifth and octave ([43, 50, 55])
+  PASS   Chug is on MIDI channel 1 by default
+  PASS   Drums row 3 is a snare on channel 10 ([(38, 9)])
+  PASS   voice channel can be remapped
+6. spawner rate and chance
+  PASS   quarter-note spawner makes 8 orbs in 2 bars (8)
+  PASS   spawner chance 30% over 100 bars gives about 30 orbs (34)
+7. scenes and persistence
+  PASS   scene 2 loads its items and progression
+  PASS   state round-trips through JSON (8959 bytes)
+  PASS   recall while running waits for the bar
+  PASS   scene applied on the next bar line
+9. all scales and progressions
+  PASS   41 scales and 54 progressions (53 + Custom) are defined (41, 54)
+  PASS   no two scales share the same notes
+  PASS   every scale starts on the root and ascends within one octave
+  PASS   no two preset progressions are identical; Custom is the last slot
+  PASS   every progression has one semitone move per chord
+  PASS   the first 37 stay in key and the last 16 have chromatic moves
+  PASS   all 41 scales x 37 in-key progressions stay in key (59163 notes checked, 0 bad)
+  PASS   chromatic moves only add the intended semitone shifts (7392 notes, 0 bad)
+  PASS   chromatic progressions do leave the key, as intended (86 runs)
+  PASS   Tritone stab moves the same peg up six semitones on the second chord ([55, 61])
+  PASS   drums are not transposed by chromatic moves ([38])
+  PASS   Custom [0, +6]: G then Ab, like Tritone stab ([55, 61])
+  PASS   Custom [0, +3, -5] cycles every three bars ([55, 58, 50, 55])
+  PASS   Custom [+12] plays an octave up ([67])
+  PASS   Custom length and per-bar shifts follow the list
+  PASS   an unset Custom falls back to the default list
+  PASS   out-of-range Custom values are clamped to +-12
+  PASS   Custom progression round-trips through saved state
+  PASS   state without a Custom list (older versions) still loads
+  PASS   scenes using Custom store the list
+  PASS   a scene that does not use Custom stores no list
+  PASS   recalling a non-Custom scene leaves your Custom list alone
+  PASS   recalling a Custom scene restores its list
+  PASS   another Custom scene restores a different list
+  PASS   scene lists survive saved state
+  PASS   scenes saved by older builds (no list) still load
+  PASS   a Custom scene without a stored list keeps the current one
+  PASS   playing after recalling a Custom scene uses the scene's list ([55, 61])
+  PASS   chord and interval names for root moves
+8. cost per buffer
+     mean 3.3 us, worst 119.7 us per 128-frame buffer (budget 2667 us); wall 0.04 s for 30 s of audio
+  PASS   average cost is under 10% of the buffer budget
+
+ALL CHECKS PASSED
