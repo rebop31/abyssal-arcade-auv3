@@ -223,13 +223,16 @@ final class ArcadeTests: XCTestCase {
         let model = ArcadeModel(au: try makeUnit())
         model.settings.prog = Music.customIndex            // shows the Custom progression editor too
         let host = UIHostingController(rootView: ArcadeView(model: model))
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 820, height: 1180))
+        // Hosted in the container app, so a real window scene exists; a window with no scene draws nothing.
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        let window = scene.map { UIWindow(windowScene: $0) } ?? UIWindow(frame: .zero)
+        window.frame = CGRect(x: 0, y: 0, width: 820, height: 1180)
         window.rootViewController = host
         window.makeKeyAndVisible()
         host.view.frame = window.bounds
         host.view.setNeedsLayout()
         host.view.layoutIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(1.5))
+        RunLoop.main.run(until: Date().addingTimeInterval(2.0))
         let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
             window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
         }

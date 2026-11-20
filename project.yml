@@ -78,10 +78,14 @@ targets:
       - Tests/ArcadeTests
       - Extension
       - Shared
+    dependencies:
+      - target: AbyssalArcade          # hosted tests: they run inside the container app, which gives them a real window scene
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.abyssalarcade.tests
         GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/AbyssalArcade.app/AbyssalArcade"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   ArcadeTests:
     build:
