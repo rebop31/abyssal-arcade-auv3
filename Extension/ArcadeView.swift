@@ -552,6 +552,7 @@ private struct SliderRow: View {
 
 struct ArcadeView: View {
     @ObservedObject var model: ArcadeModel
+    @State private var wideLayout = false
 
     private func quantLabel(_ q: Int) -> String { [1: "1/16 grid", 2: "1/8 grid", 4: "1/4 grid", 0: "Off (raw)"][q] ?? "" }
 
@@ -563,15 +564,23 @@ struct ArcadeView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     toolsRow
                     voicesRow
-                    ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .top, spacing: 18) {   // wide windows: two columns
-                            VStack(alignment: .leading, spacing: 10) { harmonyControls; behaviorControls }.frame(minWidth: 400)
-                            VStack(alignment: .leading, spacing: 10) { feelControls; physicsControls }.frame(minWidth: 300)
-                        }
-                        VStack(alignment: .leading, spacing: 14) {   // narrow windows: one column
-                            harmonyControls; behaviorControls; feelControls; physicsControls
+                    Group {
+                        if wideLayout {
+                            HStack(alignment: .top, spacing: 18) {   // wide windows: two columns
+                                VStack(alignment: .leading, spacing: 10) { harmonyControls; behaviorControls }
+                                VStack(alignment: .leading, spacing: 10) { feelControls; physicsControls }
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 14) {   // narrow windows: one column
+                                harmonyControls; behaviorControls; feelControls; physicsControls
+                            }
                         }
                     }
+                    .background(GeometryReader { geo in
+                        Color.clear
+                            .onAppear { wideLayout = geo.size.width >= 820 }
+                            .onChange(of: geo.size.width) { w in wideLayout = w >= 820 }
+                    })
                     scenesRow
                     routingRow
                     Text("MIDI out: Chug ch 1 (power chords), Lead ch 2, Bass ch 3, Bell ch 4, Drums ch 10 by default. Route this plugin's MIDI to your synths in the host.")
