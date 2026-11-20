@@ -1,6 +1,6 @@
 1. starter scene plays, every on has an off, times never go backwards
-     notes on: 436, off: 431
-  PASS   starter scene 1 produces notes (436)
+     notes on: 439, off: 434
+  PASS   starter scene 1 produces notes (439)
   PASS   events are in time order across buffers
   PASS   no stuck notes after the transport stops
   PASS   all-notes-off sent when the transport stops
@@ -9,15 +9,15 @@
   PASS   Lead peg on row 3 in D Dorian plays G3 (MIDI 55); got 55
   PASS   progression moves the same peg a scale step down on the second chord ([55, 53])
      pitch classes used over 40 s: ["C", "D", "E", "F", "G", "A", "B"]
-  PASS   bells and bass stay inside D Dorian while the chords move (516 notes)
+  PASS   bells and bass stay inside D Dorian while the chords move (525 notes)
 3. quantise grid and swing
   PASS   straight 1/16 grid: 40 notes, all on the grid
   PASS   swing 67%: off-beat slots land a third of a tick late (40 notes, 32 off-beat)
-  PASS   humanize moves notes off the grid (39 of 40)
+  PASS   humanize moves notes off the grid (38 of 40)
 4. chance, ratchet, humanize, mute
-  PASS   chance 25% plays about a quarter of the time (51 of 200)
+  PASS   chance 25% plays about a quarter of the time (46 of 200)
   PASS   ratchet x4 plays four notes per hit (4)
-  PASS   ratchet repeats get quieter ([77, 61, 51, 42])
+  PASS   ratchet repeats get quieter ([78, 62, 54, 44])
   PASS   ratchet notes all have matching offs
   PASS   a muted voice sends no MIDI
 5. channels and drum routing
@@ -64,7 +64,7 @@
   PASS   playing after recalling a Custom scene uses the scene's list ([55, 61])
   PASS   chord and interval names for root moves
 8. cost per buffer
-     mean 3.3 us, worst 119.7 us per 128-frame buffer (budget 2667 us); wall 0.04 s for 30 s of audio
+     mean 2.9 us, worst 41.2 us per 128-frame buffer (budget 2667 us); wall 0.03 s for 30 s of audio
   PASS   average cost is under 10% of the buffer budget
 
 ALL CHECKS PASSED

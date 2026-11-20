@@ -51,6 +51,16 @@ func peg(_ c: Int, _ r: Int, _ v: Voice, chance: Double = 1, ratchet: Int = 1) -
 func spawner(_ c: Int, _ r: Int, div: Int = 4, angle: Double = Double.pi / 2) -> Item {
     Item(id: 0, kind: .spawner, c: c, r: r, angle: angle, div: div)
 }
+/// Removes a key everywhere in a JSON document. Done structurally because key order differs between platforms.
+func stripKey(_ any: Any, _ key: String) -> Any {
+    if let d = any as? [String: Any] { var o: [String: Any] = [:]; for (k, v) in d where k != key { o[k] = stripKey(v, key) }; return o }
+    if let a = any as? [Any] { return a.map { stripKey($0, key) } }
+    return any
+}
+func withoutKey(_ data: Data, _ key: String) -> Data? {
+    guard let obj = try? JSONSerialization.jsonObject(with: data) else { return nil }
+    return try? JSONSerialization.data(withJSONObject: stripKey(obj, key))
+}
 func ons(_ evs: [Ev]) -> [Ev] { evs.filter { $0.status & 0xF0 == 0x90 } }
 func offs(_ evs: [Ev]) -> [Ev] { evs.filter { $0.status & 0xF0 == 0x80 } }
 
@@ -291,11 +301,10 @@ do {
         let back = ArcadeEngine(); back.importState(data)
         check(back.settings.prog == Music.customIndex && back.settings.customProgression == [0, 7, 5], "Custom progression round-trips through saved state")
         // state saved by an older build has no customProgression key: it must still load
-        if var json = String(data: data, encoding: .utf8) {
-            json = json.replacingOccurrences(of: "\"customProgression\":[0,7,5],", with: "").replacingOccurrences(of: ",\"customProgression\":[0,7,5]", with: "")
-            let old = ArcadeEngine(); old.importState(Data(json.utf8))
-            check(!json.contains("customProgression") && old.settings.customProgression == nil && old.items.count == saved.items.count, "state without a Custom list (older versions) still loads")
-        }
+        if let stripped = withoutKey(data, "customProgression") {
+            let old = ArcadeEngine(); old.importState(stripped)
+            check(!(String(data: stripped, encoding: .utf8) ?? "").contains("customProgression") && old.settings.customProgression == nil && old.items.count == saved.items.count, "state without a Custom list (older versions) still loads")
+        } else { check(false, "strip the Custom list from the saved state") }
     } else { check(false, "export state") }
     // --- scenes carry their own Custom list ---
     do {
@@ -319,9 +328,8 @@ do {
         if let d = data { back.importState(d) }
         check(back.scenes[0]?.customProgression == [0, 6] && back.scenes[1]?.customProgression == [0, 3, -5], "scene lists survive saved state")
         // an old scene without the key still loads
-        if var json = data.flatMap({ String(data: $0, encoding: .utf8) }) {
-            json = json.replacingOccurrences(of: ",\"customProgression\":[0,6]", with: "").replacingOccurrences(of: ",\"customProgression\":[0,3,-5]", with: "")
-            let old = ArcadeEngine(); old.importState(Data(json.utf8))
+        if let stripped = data.flatMap({ withoutKey($0, "customProgression") }) {
+            let old = ArcadeEngine(); old.importState(stripped)
             check(old.scenes[0] != nil && old.scenes[0]?.customProgression == nil, "scenes saved by older builds (no list) still load")
             old.settings.customProgression = [0, 5]
             old.applyScene(0)
