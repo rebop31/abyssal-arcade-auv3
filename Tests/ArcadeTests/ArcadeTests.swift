@@ -114,13 +114,14 @@ final class ArcadeTests: XCTestCase {
             }
         })
         let leadOns = events.filter { $0.bytes[0] == 0x91 }
-        // Lead is on channel 2; with a straight 1/16 grid at 120 bpm every note-on lands on a 16th (+- one render buffer)
+        // Lead is on channel 2. With a straight 1/16 grid at 120 bpm every note-on lands on a 16th. MIDI timestamps are whole
+        // samples and a 16th is 5512.5 samples at 44.1 kHz, so allow up to one sample of rounding.
         let sampleRate = au.outputBusses[0].format.sampleRate
         let grid = sampleRate * 60 / 120 / 4
         for on in leadOns {
             let phase = Double(on.sample).truncatingRemainder(dividingBy: grid)
             let off = min(phase, grid - phase)
-            XCTAssertLessThan(off, 1, "note-on at sample \(on.sample) is not on the host's 16th-note grid")
+            XCTAssertLessThanOrEqual(off, 1.01, "note-on at sample \(on.sample) is not on the host's 16th-note grid")
         }
         XCTAssertGreaterThan(leadOns.count, 4)
     }
@@ -145,6 +146,46 @@ final class ArcadeTests: XCTestCase {
 
     // MARK: Interface and model
 
+    private func pixels(_ image: UIImage) throws -> (w: Int, h: Int, data: [UInt8]) {
+        let cg = try XCTUnwrap(image.cgImage)
+        let w = cg.width, h = cg.height
+        var data = [UInt8](repeating: 0, count: w * h * 4)
+        let ctx = try XCTUnwrap(CGContext(data: &data, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return (w, h, data)
+    }
+
+    /// Prints the rendered picture into the test log (base64 PNG between markers) so it can be looked at afterwards.
+    private func logPicture(_ image: UIImage, name: String) {
+        if let png = image.pngData() { print("ARCADE_PNG_BEGIN:\(name):\(png.base64EncodedString()):ARCADE_PNG_END") }
+    }
+
+    @MainActor
+    func testArenaDrawsPegsAndOrbs() throws {
+        let model = ArcadeModel(au: try makeUnit())
+        model.host.edit { $0.launch(x: 600, y: 300, vx: 0, vy: 0) }
+        let renderer = ImageRenderer(content: ArenaView(model: model).frame(width: 900, height: 480))
+        renderer.scale = 1
+        let image = try XCTUnwrap(renderer.uiImage, "the arena should render")
+        logPicture(image, name: "arena")
+        let attachment = XCTAttachment(image: image)
+        attachment.name = "arena"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        let px = try pixels(image)
+        var ember = 0, white = 0, i = 0
+        while i < px.data.count {
+            let r = Int(px.data[i]), g = Int(px.data[i + 1]), b = Int(px.data[i + 2])
+            if r > 200 && g > 50 && g < 140 && b < 80 { ember += 1 }
+            if r > 235 && g > 235 && b > 220 { white += 1 }
+            i += 4
+        }
+        XCTAssertGreaterThan(ember, 100, "the Chug pegs (ember orange) should be drawn (\(ember) px)")
+        XCTAssertGreaterThan(white, 10, "the launched orb should be drawn (\(white) px)")
+    }
+
     @MainActor
     func testInterfaceRendersTheArena() throws {
         let model = ArcadeModel(au: try makeUnit())
@@ -157,6 +198,7 @@ final class ArcadeTests: XCTestCase {
         attachment.name = "interface"
         attachment.lifetime = .keepAlways
         add(attachment)
+        logPicture(image, name: "interface")
 
         // not blank: the rendered picture contains plenty of distinct colours
         let cg = try XCTUnwrap(image.cgImage)
