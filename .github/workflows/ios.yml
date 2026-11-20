@@ -1,0 +1,69 @@
+name: Build and test (iOS)
+
+on:
+  workflow_run:
+    workflows: ["Sync source"]
+    types: [completed]
+  push:
+    paths-ignore:
+      - 'bootstrap/**'
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: macos-14
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain info
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun simctl list devices available | head -40
+
+      - name: Engine tests (pure Swift, no simulator)
+        run: swift run -c release EngineSim
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      - name: Build the app and the AUv3 extension (unsigned, iOS Simulator)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project AbyssalArcade.xcodeproj \
+            -scheme AbyssalArcade \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            | tee build.log
+
+      - name: Run the audio unit, interface and model tests on a simulator
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [0-9]+( Pro)?' | head -1)
+          echo "Using simulator: $DEVICE"
+          xcodebuild test \
+            -project AbyssalArcade.xcodeproj \
+            -scheme ArcadeTests \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            | tee test.log
+
+      - name: Upload logs and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-and-test
+          path: |
+            build.log
+            test.log
+            TestResults.xcresult
+          if-no-files-found: ignore
