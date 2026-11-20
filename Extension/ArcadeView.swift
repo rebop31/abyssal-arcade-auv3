@@ -513,6 +513,7 @@ private struct SmallLabel: View {
     init(_ t: String) { text = t }
     var body: some View {
         Text(text.uppercased()).font(.system(size: 10, design: .monospaced)).kerning(1.4).foregroundColor(Palette.ash)
+            .lineLimit(2).fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -562,9 +563,14 @@ struct ArcadeView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     toolsRow
                     voicesRow
-                    HStack(alignment: .top, spacing: 18) {
-                        VStack(alignment: .leading, spacing: 10) { harmonyControls; behaviorControls }
-                        VStack(alignment: .leading, spacing: 10) { feelControls; physicsControls }
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: 18) {   // wide windows: two columns
+                            VStack(alignment: .leading, spacing: 10) { harmonyControls; behaviorControls }.frame(minWidth: 400)
+                            VStack(alignment: .leading, spacing: 10) { feelControls; physicsControls }.frame(minWidth: 300)
+                        }
+                        VStack(alignment: .leading, spacing: 14) {   // narrow windows: one column
+                            harmonyControls; behaviorControls; feelControls; physicsControls
+                        }
                     }
                     scenesRow
                     routingRow
@@ -575,6 +581,8 @@ struct ArcadeView: View {
         }
         .padding(12)
         .background(Palette.bg)
+        .tint(Palette.ember)
+        .accentColor(Palette.ember)
         .preferredColorScheme(.dark)
     }
 

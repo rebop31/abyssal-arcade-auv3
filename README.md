@@ -71,7 +71,7 @@ interface rendered off-screen (and checked for being non-blank), and the model (
 * Without a Mac of your own: push this folder to a GitHub repository. `.github/workflows/ios.yml` builds the app and the
   extension on a macOS runner, runs `EngineSim` and `ArcadeTests`, and uploads the logs and the `.xcresult` as artifacts.
 
-These tests were written without access to Xcode and have not been run yet; the first build may need small fixes.
+**Status:** built and tested on GitHub's macOS runner (macOS 26, Xcode 26.6, iPhone 17 Pro simulator): the app and the AUv3 extension compile, `EngineSim` passes (57 checks), and the 10 `ArcadeTests` pass, including a snapshot of the whole interface in a real window. It has not been run in a music host or on a physical device yet. The workflow uses `macos-latest` because `macos-14` jobs were cancelled before they started.
 
 ## Test the engine without Xcode
 
